@@ -1,0 +1,11 @@
+/*
+Create a class called Calculator with a single method called Add. This method should take 2 Integer 
+parameters and return their sum.
+*/
+public class Calculator {
+
+    public static Integer add(Integer num1, Integer num2) {
+        Integer result = num1 + num2;
+        return result;
+    }
+}
