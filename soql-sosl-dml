@@ -1,0 +1,208 @@
+public class DataLord {
+
+	/*
+Write a class called DataLord that has 1 method called NumAccounts. This method 
+should return the number of Accounts that exist in org
+*/
+    public static Integer numAccounts() {
+        AggregateResult result = [ SELECT count(Id) FROM Account ];
+        return (Integer)result.get('expr0');
+    }
+    
+    /*
+Write a method called NumHot. This method should return the number of Accounts with a Rating of Hot
+*/
+    public static Integer numHot() {
+        AggregateResult result = [ SELECT count(Id) FROM Account WHERE Rating = 'Hot' ];
+        return (Integer)result.get('expr0');
+    }
+    
+    /*
+Write a method called NumComplex. This method should return the number of Accounts that have an ampersand 
+(&) in the Name
+*/
+    public static Integer numComplex() {
+        AggregateResult result = [ SELECT count(Id) FROM Account WHERE Name LIKE '%&%' ];
+        return (Integer)result.get('expr0');
+    }
+    
+    /*
+Write a method called BigFive. This method should return the top 5 Accounts in terms of Annual Revenue. 
+You may only use 1 line of code for the method body
+*/
+    public static List<Account> bigFive() {
+        return [ SELECT Id, Name, AnnualRevenue FROM Account WHERE AnnualRevenue <> null ORDER BY AnnualRevenue DESC LIMIT 5 ];
+    }
+    
+    /*
+Write a method called LastBigOpportunity. This method should return the Opportunity with the most 
+recent Close Date that had an Amount over $100,000.
+*/
+    public static Opportunity lastBigOpportunity() {
+        return [ SELECT Id, Name, CloseDate, Amount FROM Opportunity
+               WHERE Amount > 100000
+               ORDER BY CloseDate DESC
+               LIMIT 1];
+    }
+    
+    /*
+Write a method called MajorPlayers. This method should return all Contacts that are associated to 
+an Account with a Rating of Hot.
+*/
+    public static List<Contact> majorPlayers() {
+        return [ SELECT Id, Name, Account.Rating FROM Contact
+               WHERE Account.Rating = 'Hot'];
+    }
+    
+    /*
+Write a method called MostPopularAccount. This method should return the Account Name 
+that has the most associated Contacts
+*/
+    public static String mostPopularAccount() {
+        AggregateResult mostPopAcc = [ SELECT Count(Id) numContacts, Account.Name FROM Contact
+                                   GROUP BY AccountId, Account.Name
+                                      ORDER BY Count(Id) DESC
+                                      LIMIT 1
+                                   ];
+        String accountName = (String)mostPopAcc.get('Name');
+        return accountName;
+    }
+    
+    //---------------------------------------------------------
+    //SOSL
+    
+    /*
+Write a method to retrieve all Contacts and Leads that are named Tom.
+*/
+    public static List<List<sObject>> getContactsLeadsNamedTom() {
+        String filter = 'Tom*';
+        return [ FIND :filter IN NAME FIELDS RETURNING Contact(Name), Lead(Name) ];
+    }
+    
+    /*
+Write a method to retrieve all Accounts that have an 'a' and an 'o' in one of their fields.
+*/
+    public static List<List<sObject>> getAccountsWithAorO() {
+        String filter = 'a OR o';
+        return [ FIND :filter IN ALL FIELDS RETURNING Account(Name) ];
+    }
+    
+    /*
+Robin knows that there is a phone number that ends in 1000, but has no idea which field it is in. 
+They know it is either on an Account, Contact, or Lead and just need the Name. Write a method that 
+solves Robin's issue.
+*/
+    public static List<List<sObject>> getObjectsWithPhoneEnding1000() {
+        String filter = '*1000';
+        return [ FIND :filter IN PHONE FIELDS RETURNING Account(Name), Contact(Name), Lead(Name) ];
+    }
+    
+    //---------------------------------------------------------
+    //DML
+    
+    /*
+Write a method called SpawnContacts that creates and inserts 200 uniquely named Contacts into the database.
+*/
+    public static List<Contact> spawnContacts() {
+        
+        List<Contact> contList = new List<Contact>();
+        for(Integer i = 0; i < 200; i++) {
+            Contact cont = new Contact(FirstName='Test', LastName='Contact ' + i);
+            contList.add(cont);
+        }
+        
+        insert contList;
+        return contList;
+    }
+    
+    /*
+Write a method called CreateHomes that creates and inserts 3 uniquely named Accounts into the database.
+*/
+    public static List<Account> createHomes() {
+        List<Account> accList = new List<Account>();
+        for(Integer i = 0; i < 3; i++) {
+            Account acc = new Account(Name='Test account ' + i);
+            accList.add(acc);
+        }
+        
+        insert accList;
+        return accList;
+    }
+    
+    /*
+Write a method called Relocate that deletes the 50 most recent Contacts in the database.
+*/
+    public static Boolean relocate() {
+        List<Contact> contList = [ SELECT Id FROM Contact ORDER BY CreatedDate DESC LIMIT 50 ];
+        
+        try{
+            delete contList;
+            return true;
+        } catch(DMLException e) {
+            System.debug(e.getMessage());
+            return false;
+        }
+    }
+    
+    /*
+Write a method called AssignHomes that relates the all Contacts created in these challenges to
+the 3 Accounts randomly.
+Note: This should only assign Contacts created during this challenge, and should ignore all 
+Contacts created otherwise.
+*/
+    public static Boolean assignHomes() {
+        List<Account> accList = [ SELECT Id FROM Account WHERE NAME LIKE 'TEST%' ];
+        List<Contact> contList = [ SELECT Id FROM Contact WHERE NAME LIKE 'TEST%' ];
+        Integer numOfAccounts = accList.size();
+        
+        for(Contact cont : contList) {
+            Integer rand = Math.floor(Math.random() * numOfAccounts).intValue();
+            cont.AccountId = accList[rand].Id;
+        }
+        
+        try{
+            update contList;
+            return true;
+        } catch(DMLException e) {
+            System.debug(e.getMessage());
+            return false;
+        }
+    }
+    
+    /*
+Write a method called Play. This method should set a savepoint and rollback to the savepoint just before 
+ending. It should then call all 4 methods in prior DML challenges then, before rolling back, print to the 
+Debug Log some statistics about the state of the Database. Include: Number of Contacts and Accounts at the 
+start, Number of Contacts and Accounts currently, and the number of Related Contacts for each Account.
+*/
+    public static void play() {
+        Integer numOfAccounts = (Integer)[ SELECT count(Id) FROM Account WHERE NAME LIKE 'TEST%' ][0].get('expr0');
+        Integer numOfContacts = (Integer)[ SELECT count(Id) FROM Contact WHERE NAME LIKE 'TEST%' ][0].get('expr0');
+        System.debug('Number of Accounts in the beginning: ' + numOfAccounts);
+        System.debug('Number of Contacts in the beginning: ' + numOfContacts);
+        
+        Savepoint sp = Database.setSavepoint();
+        
+        spawnContacts();
+        createHomes();
+        relocate();
+        assignHomes();
+        
+        List<Account> accList = [ SELECT Id, Name, (SELECT Id FROM Contacts WHERE NAME LIKE 'TEST%' ) 
+                                 FROM Account WHERE NAME LIKE 'TEST%' ];
+        Integer numOfContactsFinal = 0;
+        
+        System.debug('Number of Accounts currently: ' + accList.size());
+        
+        for(Account acc : accList) {
+            System.debug('Number of Contacts for Account "' + acc.Name + '": ' + acc.contacts.size());
+            numOfContactsFinal += acc.contacts.size();
+        }
+        
+        System.debug('Number of Contacts currently: ' + numOfContactsFinal);
+        Database.rollback(sp);
+    }
+    
+}
+
+
