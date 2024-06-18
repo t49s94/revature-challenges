@@ -1,0 +1,39 @@
+/*
+Challenge: 
+Create batchable apex that will delete stale Account records. Stale account records are Accounts 
+with no related open opportunities for the last 6 months. 
+
+Create schedulable apex that will execute the batch class above. 
+ 
+Schedule your schedulable apex to run at 12 am at the first of every month. Take a screenshot of your 
+scheduled job from within the setup menu and include it in the repo 
+*/
+public class DeleteStaleAccounts implements Database.Batchable<sObject> {
+
+    public  Database.QueryLocator start(Database.BatchableContext bc) {
+        return Database.getQueryLocator(
+        	'SELECT Id, Name, CreatedDate FROM Account ' +
+			'WHERE Id NOT IN (SELECT AccountId FROM Opportunity WHERE StageName NOT IN (\'Closed Won\', \'Closed Lost\')) ' +
+			'AND CreatedDate < LAST_N_MONTHS:6 '
+        );
+    }
+    
+    public void execute(Database.BatchableContext bc, List<Account> scope) {
+        delete scope;
+    }
+    
+    public void finish(Database.BatchableContext bc) {
+        
+    }
+    
+}
+
+//---------------------------------------------
+
+global class DeleteStaleAccountsSchedule implements Schedulable {
+    
+    global void execute(SchedulableContext sc) {
+        Database.executeBatch(new DeleteStaleAccounts());
+    }
+
+}
