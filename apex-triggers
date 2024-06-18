@@ -1,0 +1,140 @@
+/*
+Create a trigger to prevent the deletion of Accounts with Contacts
+*/
+trigger AccountTrigger on Account (before delete, after insert) {
+    
+    switch on Trigger.operationType {
+        when BEFORE_DELETE {
+            AccountTriggerHelper.preventDeletionAccountWithContacts(Trigger.old, Trigger.oldMap);
+        }
+        
+        when AFTER_INSERT {
+            AccountTriggerHelper.createContact(Trigger.new);
+        }
+    }
+}
+
+
+
+public class AccountTriggerHelper {
+    
+    /*
+Create a trigger to prevent the deletion of Accounts with Contacts
+*/
+    public static void preventDeletionAccountWithContacts(List<Account> accountList, Map<Id,Account> accountMap) {
+        List<AggregateResult> accsWithoutContacts = new List<AggregateResult>();
+            accsWithoutContacts = [ SELECT Count(Id), Account.Id FROM Contact
+                                    WHERE AccountId IN :accountList
+                                    GROUP BY Account.Id
+                                    HAVING Count(Id) > 0];
+            
+            for(AggregateResult ar : accsWithoutContacts) {
+                Id accountId = (Id)ar.get('Id');
+                accountMap.get(accountId).addError('Account has contacts');
+			}
+    }
+    
+/*
+Create a trigger to create a new related Contact when an Account is inserted.
+*/
+    public static void createContact(List<Account> accountList) {
+        List<Contact> contactList = new List<Contact>();
+        for(Account acc : accountList) {
+            Contact cont = new Contact(FirstName='Default', LastName='Contact', AccountId=acc.Id);
+            contactList.add(cont);
+        }
+        insert contactList;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------
+
+
+trigger ContactTrigger on Contact (before insert, before update, after update) {
+
+    switch on Trigger.operationType {
+        when BEFORE_INSERT {
+            ContactTriggerHelper.preventPhoneDuplicates(Trigger.new, Trigger.newMap);
+            ContactTriggerHelper.setDefaultEmail(Trigger.new);
+        }
+        
+        when BEFORE_UPDATE {
+            ContactTriggerHelper.preventPhoneDuplicates(Trigger.new, Trigger.newMap);
+        }
+        
+        when AFTER_UPDATE {
+            ContactTriggerHelper.updateAccountPhone(Trigger.new, Trigger.oldMap);
+        }
+    }
+    
+}
+
+
+
+
+public class ContactTriggerHelper {
+    
+    /*
+Create a trigger to set a default value for Email on Contacts that are inserted without one.
+*/
+    public static void setDefaultEmail(List<Contact> contactList) {
+        
+        for(Contact cont : contactList) {
+            if(cont.Email == null) {
+                cont.Email = cont.LastName + '@myorg.com';
+            }
+        }
+    }
+    
+    /*
+Create a trigger to update the phone field of the related Account when a Contact's phone field 
+is updated. The Account and Contact should end up having the same value in their phone fields.
+*/
+    public static void updateAccountPhone(List<Contact> contactList, Map<Id,Contact> contactOldMap) {
+        List<Id> accountIds = new List<Id>();
+        Map<Id,String> newPhoneMap = new Map<Id,String>();
+        
+        for(Contact cont : contactList) {
+            if(cont.Phone != contactOldMap.get(cont.Id).Phone) {
+                accountIds.add(cont.AccountId);
+                newPhoneMap.put(cont.AccountId, cont.Phone);
+            }
+        }
+        
+        List<Account> accList = [SELECT Id, Phone FROM Account WHERE Id IN :accountIds];
+        for(Account acc : accList) {
+            acc.Phone = newPhoneMap.get(acc.Id);
+        }
+                                              
+        if(accList.size() > 0) {
+            update accList;                      
+        }
+    }
+    
+    /*
+Elite Challenge I
+Universal Containers has recently had some issues with Contacts being inserted with duplicate phone 
+numbers by accident. A developer has recently cleaned all Contacts from having duplicate phone numbers,
+but they want you to make sure this doesn't happen in the future. Use a trigger to solve the above problem.
+*/
+    public static void preventPhoneDuplicates(List<Contact> contactList, Map<Id,Contact> contactNewMap){
+        Map<String,Contact> phoneMap = new Map<String,Contact>();
+        for(Contact cont : contactList) {
+            if(cont.Phone != null) {
+                // Remove duplicates from list to be inserted
+                if(phoneMap.get(cont.Phone) == null) {
+                    phoneMap.put(cont.Phone, cont);
+                } else {
+                    cont.addError('Phone already exists in org');
+                }
+            }
+        }
+        
+        List<Contact> dupPhoneConts = [ SELECT Id, Phone FROM Contact WHERE Phone IN :phoneMap.keySet() ];
+        for(Contact cont : dupPhoneConts ) {
+            phoneMap.get(cont.Phone).addError('Phone already exists in org');
+        }
+    }
+        
+
+}
