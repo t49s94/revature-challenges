@@ -1,0 +1,162 @@
+<!-- 
+Challenge I
+Create a Visualforce page that displays a single Account, specified as a parameter in the URL.    
+-->
+<apex:page standardController="Account">
+    <apex:detail relatedList="false" />
+</apex:page>
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+<!--
+Challenge II
+Modify your Visualforce page to display a paginated table of Accounts.
+-->
+<apex:page standardController="Account" recordSetvar="accounts">
+    <apex:pageBlock title="Account list">
+        <apex:form>
+        <apex:pageBlockTable value="{! accounts }" var="acc">
+            <apex:column value="{! acc.Name }"/>
+            <apex:column value="{! acc.Phone }"/>
+            <apex:column value="{! acc.Industry }"/>
+            <apex:column value="{! acc.AnnualRevenue }"/>
+        </apex:pageBlockTable>
+        
+        <apex:panelGrid columns="2">
+                <apex:commandLink action="{!previous}">Previous</apex:commandlink>
+                <apex:commandLink action="{!next}">Next</apex:commandlink>
+            </apex:panelGrid>
+       </apex:form>
+    </apex:pageBlock>
+</apex:page>
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------
+  
+
+  <!-- 
+Challenge III
+Modify your Visualforce page to display a single Account, but this time the Account should always be the same,
+regardless of the parameter in the URL. You may not use a Standard Controller.
+-->
+<apex:page standardController="Account" extensions="SameAccountPageExtension" renderAs="pdf">
+    <apex:pageBlock title="Account Details">
+    <apex:pageBlockSection>
+        <apex:outputField value="{! acc.Name }"/>
+        <apex:outputField value="{! acc.Phone }"/>
+        <apex:outputField value="{! acc.Industry }"/>
+        <apex:outputField value="{! acc.AnnualRevenue }"/>
+    </apex:pageBlockSection>
+</apex:pageBlock>
+    
+<!--
+Challenge IV
+Add to your Visualforce page an About Me section. This should simply be a paragraph about yourself. 
+However, this paragraph should be translated to Spanish if the current viewing user has their language 
+set to Spanish. Download this creation as a PDF.
+-->
+    <apex:pageBlock title="About me">
+        <apex:pageBlockSection>
+        	<p>{! aboutMe }</p>
+    	</apex:pageBlockSection>
+    </apex:pageBlock>
+    
+<!--
+Challenge V
+Style your wondrous Visualforce creation with CSS.
+-->
+    <style type="text/css">
+        p { 
+        font-weight: bold;
+        font-size: 30px;
+        }
+    </style>
+    
+</apex:page>
+
+
+
+  public class SameAccountPageExtension {
+
+    private final Account acc;
+    private String greeting;
+    Public String accountName {get; set;}
+    
+    public SameAccountPageExtension(ApexPages.StandardController stdController) {
+        this.acc = [ SELECT Id, Name, Phone, Industry, AnnualRevenue 
+                                                          FROM Account
+                       										WHERE Id = '001aj00000LRgqJAAT'];
+    }
+    
+    public Account getAcc() {
+        return this.acc;
+    }
+    
+    public String getAboutMe() {
+        String userLanguage = UserInfo.getLanguage();
+        if(userLanguage == 'es') {
+            return 'Hola, my nombre es Sergio y me gusta mucho VisualForce!';
+        } else {
+            return 'Hello, my name is Sergio and I like VisualForce very much!';
+        }
+    }
+    
+    public void showGreeting() {
+        this.greeting = 'Hello ' + this.accountName;
+    }
+    
+    public String getGreeting() {
+        return this.greeting;
+    }
+
+}
+
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------
+  
+<apex:page standardController="Account" extensions="SameAccountPageExtension">
+    
+    <style type="text/css">
+        p { 
+        font-weight: bold;
+        font-size: 30px;
+        }
+    </style>
+    
+    <apex:pageBlock title="Account Details">
+        <apex:pageBlockSection>
+            <apex:outputField value="{! acc.Name }"/>
+            <apex:outputField value="{! acc.Phone }"/>
+            <apex:outputField value="{! acc.Industry }"/>
+            <apex:outputField value="{! acc.AnnualRevenue }"/>
+        </apex:pageBlockSection>
+	</apex:pageBlock>
+    
+    <apex:pageBlock title="About me">
+        <apex:pageBlockSection>
+        	<p>{! aboutMe }</p>
+    	</apex:pageBlockSection>
+    </apex:pageBlock>
+      
+    <!--
+Challenge VI
+Add functionality to your Visualforce page to add a greeting to the page. This greeting should 
+include the Name of the Account specified as a parameter in the URL, and should only display 
+once you click a button.
+-->
+    <apex:form>
+        <apex:pageBlock title="Greeting" id="greetingSection">
+            <apex:pageBlockButtons>
+                <apex:commandButton action="{!showGreeting}" value="Greet me" reRender="greetingSection">
+                    <apex:param name="accountName" value="{!account.Name}" assignTo="{!accountName}" />
+                </apex:commandButton> 
+            </apex:pageBlockButtons>
+            <p>{!greeting}</p>
+        </apex:pageBlock>
+    </apex:form>
+      
+</apex:page>
+          
