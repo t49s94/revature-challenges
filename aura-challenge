@@ -1,0 +1,75 @@
+<aura:event type="COMPONENT">
+    <aura:attribute name="childMessage" type="String"/>
+</aura:event>
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+
+<!--
+Aura Challenge
+Create two Aura components, one child and one parent, that showcases your ability to create component communication. 
+The child component should contain a text input box and a button. When the user clicks the button, the input text should be passed to the parent component. 
+The parent component receives messages from the child and prints them out in a list. 
+We should have a button on the parent that calls a function in our child component - this function should clear the value of our input box.
+
+-->
+<aura:application >
+	<aura:handler name="childEvent" event="c:childEvent" action="{!c.handleChildEvent}"/>
+    <aura:attribute name="listMessages" type="String[]" />
+    
+    <c:childComponent aura:id="childComponent"></c:childComponent>
+    <ui:button aura:id="button" buttonTitle="Clear input" class="button" label="Clear" press="{!c.handleClick}"/>
+    
+    <aura:iteration items="{!v.listMessages}" var="item">
+        <div>{!item}</div>
+    </aura:iteration>
+       
+</aura:application>
+
+
+({
+	handleChildEvent : function(component, event, helper) {
+		var childMessage = event.getParam("childMessage");
+        var listMessages = component.get("v.listMessages");
+        
+        listMessages.push(childMessage);
+        component.set("v.listMessages", listMessages);
+        
+	},
+    
+    handleClick : function(component, event, helper) {
+		var childComponent = component.find("childComponent");
+        childComponent.clearBox();   
+	}
+})
+
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+
+<aura:component >
+    
+    <aura:registerEvent name="childEvent" type="c:childEvent"/>
+    <aura:method name="clearBox" action="{!c.clearBox}"></aura:method>
+    
+	<ui:inputText aura:id="childMessage" label="Child message" class="field" />
+    <ui:button aura:id="button" buttonTitle="" class="button" label="Click me" press="{!c.handleClick}"/>
+</aura:component>
+
+
+({
+	handleClick : function(component, event, helper) {
+		var childMessage = component.find("childMessage").get("v.value");
+        
+        var eventComp = component.getEvent("childEvent");
+        eventComp.setParams({"childMessage": childMessage});
+        eventComp.fire();
+	},
+    
+    clearBox : function(component, event, helper) {
+		var childMessageBox = component.find("childMessage");
+        childMessageBox.set("v.value", "");
+	}
+})
