@@ -138,3 +138,96 @@ but they want you to make sure this doesn't happen in the future. Use a trigger 
         
 
 }
+
+
+
+//-------------------------------------------------------------------------------------------------------------------------------
+
+
+trigger CaseTrigger on Case (before insert, before update) {
+    switch on Trigger.operationType {
+        when BEFORE_INSERT {
+            CaseTriggerHelper.changeToNewStatus(Trigger.new);
+        }
+        when BEFORE_UPDATE {
+            CaseTriggerHelper.changetoWorkingStatus(Trigger.new, Trigger.oldMap);
+        }
+    }
+}
+
+
+
+public class CaseTriggerHelper {
+
+    /*
+Elite Challenge II
+Universal Containers has recently had some issues with Cases that they need solving. Their first issue 
+is that Cases are being created with their Status not set to New. All new Cases should have New as their 
+Status. Their second issue is that support representatives are forgetting to change the Status to Working,
+but are adding in Internal Comments. Make sure that whenever the Internal Comments are updated, the Status
+is also changed to Working if it's New.
+*/
+    public static void changeToNewStatus(List<Case> caseList) {
+        for(Case thisCase : caseList) {
+            if(thisCase.Status != 'New') {
+                thisCase.Status = 'New';
+            }
+        }
+    }
+    
+    public static void changetoWorkingStatus(List<Case> caseList, Map<Id,Case> caseOldMap) {
+        for(Case thisCase : caseList) {
+            if(thisCase.Comments != caseOldMap.get(thisCase.Id).Comments && thisCase.Status == 'New'){
+                thisCase.Status = 'Working';
+            }
+        }
+    }
+    
+}
+
+
+
+//-------------------------------------------------------------------------------------------------------------------------------
+
+
+
+trigger OrderTrigger on Order (after insert) {
+switch on Trigger.operationType {
+        when AFTER_INSERT {
+            OrderTriggerHelper.addPortableProduct(Trigger.new);
+        }
+    }
+}
+
+
+public class OrderTriggerHelper {
+/*
+Elite Challenge III
+Universal Containers always uses the Installation: Portable Product for all of their Orders. 
+Make it so that this Product is automatically added to a new Order if it's not already there.
+*/
+    public static void addPortableProduct(List<Order> orderList) {
+        Pricebook2 stdPricebook = [SELECT Id, Name, 
+                                   (SELECT Id, Product2Id, UnitPrice FROM PricebookEntries 
+                                    WHERE Name = 'Installation: Portable') 
+                                   FROM PriceBook2 WHERE NAME = 'Standard' LIMIT 1];
+        
+        List<Order> ordersWithoutProduct = [SELECT Id FROM Order WHERE Id IN :orderList 
+                                            AND Id NOT IN (SELECT OrderId FROM OrderItem 
+                                                           WHERE Product2Id = :stdPricebook.PricebookEntries[0].Product2Id)];
+        
+        List<OrderItem> orderItemList = new List<OrderItem>();
+        
+        for(Order thisOrder : ordersWithoutProduct) {
+            OrderItem item = new OrderItem(OrderId=thisOrder.Id, Product2Id=stdPricebook.PricebookEntries[0].Product2Id,
+                                          PricebookEntryId=stdPricebook.PricebookEntries[0].Id,
+                                          UnitPrice=stdPricebook.PricebookEntries[0].UnitPrice,
+                                          Quantity=1);
+            orderItemList.add(item);
+        }
+        
+        if(orderItemList.size() > 0) {
+            insert orderItemList;
+        }
+    }
+}
