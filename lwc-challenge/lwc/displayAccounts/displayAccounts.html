@@ -1,0 +1,19 @@
+<template>
+    <div class="slds-grid slds-wrap medium-font">
+        <div class="slds-col slds-size_1-of-2">
+            <lightning-input  data-id="search-text" type="text" label="Account name" required></lightning-input>      
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+            <lightning-button  variant="brand" label="Search" title="Primary action" onclick={handleClick}></lightning-button>     
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+            <lightning-datatable
+                key-field="id"
+                data={accounts}
+                columns={columns}>
+            </lightning-datatable>
+        </div>
+    </div>
+
+    
+</template>

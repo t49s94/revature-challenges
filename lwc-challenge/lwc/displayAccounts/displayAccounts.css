@@ -1,0 +1,7 @@
+:host  {
+    --lwc-formLabelFontSize: medium;
+}
+
+.medium-font{
+    font-size: medium;
+ }
