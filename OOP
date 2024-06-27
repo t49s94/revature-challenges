@@ -1,0 +1,162 @@
+/*
+Challenge I
+Create a class called Vehicle. The Vehicle class should have the following:
+
+An enum publicly available called Medium with the values LAND, AIR, WATER
+A property called Speed. This should be read-only outside of the class. This is not allowed to be negative
+A property called Name. This should be read-only outside of the class
+A property called Occupants. This is not allowed to be negative
+A constant called Capacity. This must be at least 1
+A variable called Media, which is a list of Mediums. This should only be 
+accessible by the class and any of its children
+*/
+public abstract class Vehicle {
+
+    public enum medium {LAND, AIR, WATER}
+    
+    public Integer speed { 
+        get; 
+        private set {
+            speed = value < 0 ? value * -1 : value;
+        } 
+    }
+    
+    public String name {get; private set;}
+    
+    public Integer occupants { 
+        get; 
+        set {
+            occupants = value < 0 ? value * -1 : value;
+        } 
+    }
+    
+    public Integer capacity { 
+        get; 
+        set {
+            capacity = value < 0 ? 1 : value;
+        } 
+    }
+    
+    public List<medium> media = new List<medium>();
+    
+    /*
+Challenge II
+Add the following methods to Vehicle:
+
+A constructor that sets Speed, Occupants, Name, and Capacity to default values
+A method called Accelerate which changes Speed by the specified amount
+An abstract method called Turn
+A method called ToString that prints out the current Speed, all Media, the Name, and the number of Occupants
+*/
+    public Vehicle() {
+        this.speed = 100;
+        this.name = 'My Vehicle';
+        this.occupants = 2;
+        this.capacity = 4;
+    }
+    
+    public virtual void accelerate(Integer newSpeed) {
+        this.speed = newSpeed;
+    }
+    
+    public abstract void turn(Integer steeringRotation, Decimal tireRotation);
+    
+    public override String toString() {
+        String vehicleString = 'Speed: ' + this.speed + '\n';
+        
+        vehicleString += 'Media: ';
+        for(medium md : this.media) {
+            vehicleString += md + ', ';
+        }
+        
+        vehicleString = this.media.size() > 0 ? vehicleString.left(vehicleString.lastIndexOf(',')) + '\n'
+            : vehicleString + '\n';
+        vehicleString += 'Name: ' + this.name + '\n';
+        vehicleString += 'Occupants: ' + this.occupants;
+    
+        return vehicleString;
+    }
+    
+    /*
+Challenge IV
+Make the following modifications to Vehicle:
+Implement constructor chaining to allow for values set by the constructor to be input instead
+*/
+    public Vehicle(Integer speed, String name, Integer occupants, Integer capacity, List<medium> media) {
+        this.speed = speed;
+        this.name = name;
+        this.occupants = occupants;
+        this.capacity = capacity;
+        this.media = media;
+        System.debug(this.toString());
+    }
+    
+    public Vehicle(Integer speed, String name, Integer occupants, Integer capacity) {
+        this(speed, name, occupants, capacity, new List<medium>());
+    }
+}
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+
+
+/*
+Challenge III
+Create a class called Car that extends Vehicle. Car should have the following:
+
+A variable called SteeringRotation. This should not be accessible outside of the class. It must be between -1440 and 1440, inclusive
+A property called TireRotation. This should be read-only outside of the class. It must be between -90 and 90, inclusive
+A property called Gear. This should be read-only outside of the class
+A constructor that calls the base constructor of Vehicle and then sets the two rotation values to 0 and adds the LAND Medium to Media
+Implement Turn to rotate the SteeringRotation by the specified amount, in degrees, and the TireRotate by 1/16th the specified amount, in degrees.
+*/
+public class Car extends Vehicle {
+    
+    private Integer steeringRotation {
+        get;
+        set {
+            steeringRotation = value < -1440 || value > 1440 ? 0 : value;
+        }
+    }
+    
+    public Decimal tireRotation {
+        get;
+        private set {
+            tireRotation = value < -90 || value > 90 ? 0 : value;
+        }
+    }
+    
+    public Integer gear {get; private set;}
+    
+    public Car() {
+        super();
+        this.steeringRotation = 0;
+        this.tireRotation = 0;
+        this.media.add(medium.LAND);
+        
+    }
+    
+    public override void turn(Integer steeringRotation, Decimal tireRotation) {
+        this.steeringRotation = steeringRotation;
+        this.tireRotation = tireRotation / 16;
+    }
+    
+/*
+Challenge IV
+Make the following modifications to Car:
+
+Implement constructor chaining to allow inputs for values that Vehicle's constructor sets
+Override the Accelerate function to call the base implementation, and then set the Gear via the following equation: Gear = (Integer)Math.ceil(0.4444 * (Math.sqrt(Speed)))
+*/
+    
+    public Car(Integer speed, String name, Integer occupants, Integer capacity) {
+        super(speed, name, occupants, capacity);
+    }
+    
+    public override void accelerate(Integer newSpeed) {
+        super.accelerate(newSpeed);
+        this.gear = (Integer)Math.ceil(0.4444 * (Math.sqrt(speed)));
+    }
+}
