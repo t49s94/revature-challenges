@@ -1,0 +1,24 @@
+<template>
+    <div class="slds-grid slds-wrap medium-font">
+        <div class="slds-col slds-size_1-of-2">
+            <lightning-input data-id="firstName"  lwc:ref="firstName" type="text" label="First name" required></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2">
+            <lightning-input data-id="lastName"  lwc:ref="lastName" type="text" label="Last name" required></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-m-top_medium">
+            <lightning-record-picker
+                lwc:ref="account"
+                label="Accounts"
+                placeholder="Search Accounts..."
+                object-api-name="Account">
+            </lightning-record-picker>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+            <lightning-button  variant="brand" label="Save" title="Save contact" onclick={saveContact}></lightning-button>     
+        </div>
+        <div data-id="results" lwc:ref="results" class="slds-col slds-size_1-of-1 slds-m-top_medium large-font" >
+              
+        </div>
+    </div>
+</template>
