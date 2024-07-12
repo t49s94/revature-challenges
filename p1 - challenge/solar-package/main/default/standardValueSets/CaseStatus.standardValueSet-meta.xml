@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sorted>false</sorted>
+    <standardValue>
+        <fullName>New</fullName>
+        <default>true</default>
+        <label>New</label>
+        <closed>false</closed>
+    </standardValue>
+    <standardValue>
+        <fullName>Accepted</fullName>
+        <default>false</default>
+        <label>Accepted</label>
+        <closed>false</closed>
+    </standardValue>
+    <standardValue>
+        <fullName>In Progress</fullName>
+        <default>false</default>
+        <label>In Progress</label>
+        <closed>false</closed>
+    </standardValue>
+    <standardValue>
+        <fullName>Delayed</fullName>
+        <default>false</default>
+        <label>Delayed</label>
+        <closed>false</closed>
+    </standardValue>
+    <standardValue>
+        <fullName>Closed (Success)</fullName>
+        <default>false</default>
+        <label>Closed (Success)</label>
+        <closed>true</closed>
+    </standardValue>
+    <standardValue>
+        <fullName>Closed (Failed)</fullName>
+        <default>false</default>
+        <label>Closed (Failed)</label>
+        <closed>true</closed>
+    </standardValue>
+</StandardValueSet>

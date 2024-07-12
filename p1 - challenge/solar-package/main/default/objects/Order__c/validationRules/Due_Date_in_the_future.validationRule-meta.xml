@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Due_Date_in_the_future</fullName>
+    <active>true</active>
+    <description>Due Date must be in the future</description>
+    <errorConditionFormula>AND(ISCHANGED( Next_Payment_Due_Date__c ), 
+NOT(ISBLANK(Next_Payment_Due_Date__c )),
+Next_Payment_Due_Date__c &lt;  TODAY())</errorConditionFormula>
+    <errorDisplayField>Next_Payment_Due_Date__c</errorDisplayField>
+    <errorMessage>Due Date Next Payment must be in the future</errorMessage>
+</ValidationRule>

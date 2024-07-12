@@ -1,0 +1,5 @@
+Hello {!WorkOrder.Assigned_To__c},
+This email is to inform you that you were assigned the following work order: {!WorkOrder.WorkOrderNumber}.
+
+Regards,
+Universal Solar Inc.
